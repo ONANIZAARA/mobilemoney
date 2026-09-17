@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Money System</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
+        }
+        h1 { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        .tabs { 
+            display: flex; 
+            margin-bottom: 20px; 
+            border-bottom: 2px solid #e0e0e0; 
+        }
+        .tab { 
+            flex: 1; 
+            padding: 15px; 
+            text-align: center; 
+            cursor: pointer; 
+            font-weight: bold; 
+            color: #7f8c8d;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            background: #f8f9fa;
+        }
+        .tab.active { 
+            color: #667eea; 
+            border-bottom: 3px solid #667eea;
+            margin-bottom: -2px;
+        }
+        .section { 
+            padding: 30px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 8px; 
+            background: #ffffff;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .section.active { 
+            display: block; 
+        }
+        h2 { 
+            margin-top: 0; 
+            color: #667eea; 
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            margin: 10px 0; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            margin: 10px 0; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary { 
+            background: #3498db;
+            color: white;
+        }
+        .btn-danger { 
+            background: #e74c3c; 
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .receipt { 
+            background: #f8f9fa; 
+            border: 3px dashed #27ae60; 
+            padding: 25px; 
+            margin-top: 20px; 
+            border-radius: 8px; 
+            display: none;
+        }
+        .receipt h3 { 
+            text-align: center; 
+            color: #27ae60; 
+            margin-top: 0; 
+            border-bottom: 2px solid #27ae60; 
+            padding-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .receipt p { 
+            margin: 12px 0; 
+            font-size: 15px; 
+            display: flex; 
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .receipt p:last-child {
+            border-bottom: none;
+        }
+        .receipt strong { 
+            color: #2c3e50; 
+        }
+        .error { 
+            color: #e74c3c; 
+            font-weight: bold; 
+            margin-top: 10px; 
+            display: none;
+            background: #fdeaea;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .balance-display { 
+            font-size: 2.5em; 
+            font-weight: bold; 
+            color: #27ae60; 
+            text-align: center; 
+            margin: 20px 0; 
+            background: linear-gradient(135deg, #e8f8f5 0%, #d5f5e3 100%);
+            padding: 25px; 
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);
+        }
+        .header-info { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .wallet-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .wallet-info p {
+            margin: 8px 0;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>MOBILE MONEY TRANSACTION SYSTEM</h1>
+    <p class="subtitle">Secure • Fast • Reliable</p>
+
+    <!-- Auth Tabs -->
+    <div class="tabs" id="authTabs">
+        <div class="tab active" onclick="switchTab('register')">Register</div>
+        <div class="tab" onclick="switchTab('login')">Sign In</div>
+    </div>
+
+    <!-- Registration Section -->
+    <div class="section active" id="registerSection">
+        <h2>Create New Account</h2>
+        <input type="text" id="regPhone" placeholder="Phone Number (e.g., 0712345678)">
+        <input type="text" id="regName" placeholder="Full Name">
+        <input type="password" id="regPin" placeholder="4-digit PIN" maxlength="4">
+        <button class="btn-primary" onclick="register()">Register & Create Wallet</button>
+        <p class="error" id="regError"></p>
+    </div>
+
+    <!-- Login Section -->
+    <div class="section" id="loginSection">
+        <h2>Sign In to Existing Account</h2>
+        <input type="text" id="loginPhone" placeholder="Phone Number">
+        <input type="password" id="loginPin" placeholder="4-digit PIN" maxlength="4">
+        <button class="btn-secondary" onclick="login()">Sign In</button>
+        <p class="error" id="loginError"></p>
+    </div>
+
+    <!-- Wallet Dashboard -->
+    <div class="section" id="walletSection">
+        <div class="header-info">
+            <h2>Welcome, <span id="displayName">User</span></h2>
+            <button onclick="logout()" class="btn-danger" style="width: auto; padding: 10px 20px; margin:0;">Logout</button>
+        </div>
+        
+        <div class="wallet-info">
+            <p><strong>Phone:</strong> <span id="displayPhone"></span></p>
+            <p><strong>Wallet ID:</strong> <span id="displayWalletId" style="font-size: 0.85em; color: #7f8c8d;"></span></p>
+        </div>
+        
+        <div class="balance-display">Balance: $<span id="displayBalance">0.00</span></div>
+        <button class="btn-secondary" onclick="checkBalance()">Refresh Balance</button>
+        
+        <h2 style="margin-top: 30px;">Make a Transaction</h2>
+        <input type="number" id="txAmount" placeholder="Enter Amount">
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-primary" onclick="deposit()">Deposit</button>
+            <button class="btn-secondary" onclick="withdraw()" style="background: #e67e22;">Withdraw (1.5% Fee)</button>
+        </div>
+        <p class="error" id="txError"></p>
+        
+        <!-- Professional Receipt -->
+        <div class="receipt" id="receiptBox">
+            <h3>✅ OFFICIAL TRANSACTION RECEIPT</h3>
+            <p><strong>Transaction ID:</strong> <span id="recId" style="font-size: 0.9em;"></span></p>
+            <p><strong>Phone Number:</strong> <span id="recPhone"></span></p>
+            <p><strong>Transaction Type:</strong> <span id="recType"></span></p>
+            <p><strong>Amount:</strong> $<span id="recAmount"></span></p>
+            <p><strong>Amount in Words:</strong> <span id="recWords" style="font-style: italic;"></span></p>
+            <p><strong>Transaction Charge:</strong> $<span id="recFee"></span></p>
+            <p><strong>Updated Balance:</strong> $<span id="recBalance"></span></p>
+            <p><strong>Status:</strong> <span id="recStatus" style="color: green; font-weight: bold;"></span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+       const API_URL = "/api";
+    let currentWalletId = "";
+    let currentUserPhone = "";
+    let currentUserName = "";
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => { 
+            if(s.id !== 'walletSection') s.classList.remove('active'); 
+        });
+        if (tab === 'register') {
+            document.querySelector('.tab:first-child').classList.add('active');
+            document.getElementById('registerSection').classList.add('active');
+        } else {
+            document.querySelector('.tab:last-child').classList.add('active');
+            document.getElementById('loginSection').classList.add('active');
+        }
+    }
+
+    function showError(elementId, message) {
+        const el = document.getElementById(elementId);
+        el.textContent = message;
+        el.style.display = "block";
+        setTimeout(() => el.style.display = "none", 5000);
+    }
+
+    async function register() {
+        const phone = document.getElementById("regPhone").value;
+        const name = document.getElementById("regName").value;
+        const pin = document.getElementById("regPin").value;
+        if (!phone || !name || !pin) return showError("regError", "All fields required!");
+
+        const formData = new URLSearchParams();
+        formData.append("phoneNumber", phone);
+        formData.append("fullName", name);
+        formData.append("pin", pin);
+
+        try {
+            const response = await fetch(`${API_URL}/register`, { 
+                method: "POST", 
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }, 
+                body: formData 
+            });
+            const data = await response.json();
+            if (data.status === "SUCCESS") {
+                currentUserPhone = phone;
+                currentUserName = name;
+                currentWalletId = data.walletId;
+                showDashboard();
+            } else { 
+                showError("regError", data.message || "Registration failed"); 
+            }
+        } catch (err) { 
+            showError("regError", "Connection error. Is backend running?"); 
+        }
+    }
+
+    async function login() {
+        const phone = document.getElementById("loginPhone").value;
+        const pin = document.getElementById("loginPin").value;
+        if (!phone || !pin) return showError("loginError", "Phone and PIN required!");
+
+        const formData = new URLSearchParams();
+        formData.append("phoneNumber", phone);
+        formData.append("pin", pin);
+
+        try {
+            const response = await fetch(`${API_URL}/login`, { 
+                method: "POST", 
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }, 
+                body: formData 
+            });
+            const data = await response.json();
+            if (data.status === "SUCCESS") {
+                currentUserPhone = phone;
+                currentWalletId = data.walletId;
+                currentUserName = "User";
+                showDashboard();
+            } else { 
+                showError("loginError", data.message || "Login failed"); 
+            }
+        } catch (err) { 
+            showError("loginError", "Connection error. Is backend running?"); 
+        }
+    }
+
+    function showDashboard() {
+        document.getElementById("authTabs").style.display = "none";
+        document.getElementById("registerSection").style.display = "none";
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("walletSection").style.display = "block";
+        document.getElementById("walletSection").classList.add("active");
+        
+        document.getElementById("displayName").textContent = currentUserName;
+        document.getElementById("displayPhone").textContent = currentUserPhone;
+        document.getElementById("displayWalletId").textContent = currentWalletId;
+        checkBalance();
+    }
+
+    function logout() {
+        currentWalletId = "";
+        currentUserPhone = "";
+        currentUserName = "";
+        document.getElementById("walletSection").style.display = "none";
+        document.getElementById("walletSection").classList.remove("active");
+        document.getElementById("receiptBox").style.display = "none";
+        document.getElementById("authTabs").style.display = "flex";
+        document.getElementById("loginPhone").value = "";
+        document.getElementById("loginPin").value = "";
+        switchTab('login');
+    }
+
+    async function checkBalance() {
+        if (!currentWalletId) return;
+        try {
+            const response = await fetch(`${API_URL}/balance?walletId=${currentWalletId}`);
+            const data = await response.json();
+            document.getElementById("displayBalance").textContent = parseFloat(data.currentBalance).toFixed(2);
+        } catch (err) { 
+            console.error("Failed to fetch balance"); 
+        }
+    }
+
+    async function processTransaction(type) {
+        const amount = document.getElementById("txAmount").value;
+        if (!amount || amount <= 0) return showError("txError", "Enter valid amount.");
+
+        const formData = new URLSearchParams();
+        formData.append("walletId", currentWalletId);
+        formData.append("amount", amount);
+        formData.append("idempotencyKey", crypto.randomUUID());
+
+        const endpoint = type === "DEPOSIT" ? "deposit" : "withdraw";
+
+        try {
+            const response = await fetch(`${API_URL}/${endpoint}`, { 
+                method: "POST", 
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }, 
+                body: formData 
+            });
+            if (!response.ok) throw new Error("Transaction failed (Check balance or network)");
+            const data = await response.json();
+            
+            document.getElementById("recId").textContent = data.transactionId || "N/A";
+            document.getElementById("recPhone").textContent = currentUserPhone;
+            document.getElementById("recType").textContent = data.transactionType;
+            document.getElementById("recAmount").textContent = parseFloat(data.amount).toFixed(2);
+            document.getElementById("recWords").textContent = convertToWords(parseFloat(data.amount)) + " Only";
+            document.getElementById("recFee").textContent = parseFloat(data.fee).toFixed(2);
+            document.getElementById("recBalance").textContent = parseFloat(data.updatedBalance).toFixed(2);
+            document.getElementById("recStatus").textContent = data.status;
+            
+            document.getElementById("receiptBox").style.display = "block";
+            document.getElementById("displayBalance").textContent = parseFloat(data.updatedBalance).toFixed(2);
+            document.getElementById("txAmount").value = "";
+        } catch (err) { 
+            showError("txError", err.message); 
+            document.getElementById("receiptBox").style.display = "none"; 
+        }
+    }
+
+    function deposit() { processTransaction("DEPOSIT"); }
+    function withdraw() { processTransaction("WITHDRAWAL"); }
+
+    function convertToWords(number) {
+        if (number === 0) return "Zero";
+        const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+        const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+        let num = Math.floor(number);
+        let words = "";
+        if (num >= 1000000) { words += ones[Math.floor(num / 1000000)] + " Million "; num %= 1000000; }
+        if (num >= 1000) { words += ones[Math.floor(num / 1000)] + " Thousand "; num %= 1000; }
+        if (num >= 100) { words += ones[Math.floor(num / 100)] + " Hundred "; num %= 100; }
+        if (num > 0) {
+            if (num < 20) words += ones[num];
+            else { words += tens[Math.floor(num / 10)]; if (num % 10 > 0) words += " " + ones[num % 10]; }
+        }
+        return words.trim();
+    }
+</script>
+</body>
+</html>

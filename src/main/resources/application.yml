@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://ep-ancient-butterfly-aymgl0pq-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require
+    username: neondb_owner
+    password: npg_9O0YHvwkehAV
+  sql:
+    init:
+      mode: always
