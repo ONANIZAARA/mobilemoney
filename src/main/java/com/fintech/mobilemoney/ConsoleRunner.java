@@ -82,12 +82,10 @@ public class ConsoleRunner implements CommandLineRunner {
         }
     }
 
-    // Helper to format money cleanly (removes ugly .0000 trailing zeros)
     private String formatMoney(BigDecimal amount) {
         return amount.stripTrailingZeros().toPlainString();
     }
 
-    // Upgraded Receipt Printer
     private void printReceipt(Transaction t, BigDecimal balance, String phone) {
         System.out.println("\n===========================================");
         System.out.println("          OFFICIAL TRANSACTION RECEIPT     ");
@@ -103,36 +101,46 @@ public class ConsoleRunner implements CommandLineRunner {
         System.out.println("===========================================\n");
     }
 
-    // Helper method to convert numbers to words
+    // FIXED: Robust method to convert large numbers to words
     private String convertToWords(double number) {
         if (number == 0) return "Zero";
-        
+
         String[] ones = {"", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"};
         String[] tens = {"", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"};
-        
+
         long num = (long) number;
         StringBuilder words = new StringBuilder();
-        
+
         if (num >= 1000000) {
-            words.append(ones[(int)(num / 1000000)]).append(" Million ");
+            words.append(convertChunk(num / 1000000, ones, tens)).append(" Million ");
             num %= 1000000;
         }
         if (num >= 1000) {
-            words.append(ones[(int)(num / 1000)]).append(" Thousand ");
+            words.append(convertChunk(num / 1000, ones, tens)).append(" Thousand ");
             num %= 1000;
         }
-        if (num >= 100) {
-            words.append(ones[(int)(num / 100)]).append(" Hundred ");
-            num %= 100;
-        }
         if (num > 0) {
-            if (num < 20) words.append(ones[(int) num]);
-            else {
-                words.append(tens[(int)(num / 10)]);
-                if (num % 10 > 0) words.append(" ").append(ones[(int)(num % 10)]);
-            }
+            words.append(convertChunk(num, ones, tens));
         }
-        
+
         return words.toString().trim();
+    }
+
+    // Helper to handle chunks of numbers (Hundreds, Tens, Ones)
+    private String convertChunk(long number, String[] ones, String[] tens) {
+        StringBuilder chunk = new StringBuilder();
+        if (number >= 100) {
+            chunk.append(ones[(int)(number / 100)]).append(" Hundred ");
+            number %= 100;
+        }
+        if (number >= 20) {
+            chunk.append(tens[(int)(number / 10)]);
+            if (number % 10 > 0) {
+                chunk.append(" ").append(ones[(int)(number % 10)]);
+            }
+        } else if (number > 0) {
+            chunk.append(ones[(int) number]);
+        }
+        return chunk.toString().trim();
     }
 }
