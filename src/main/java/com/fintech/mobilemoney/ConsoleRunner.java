@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.util.Scanner;
 import java.util.UUID;
 
-@Component
+// @Component
 public class ConsoleRunner implements CommandLineRunner {
 
     private final UserService userService;

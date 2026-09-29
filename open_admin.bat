@@ -1,0 +1,3 @@
+@echo off
+echo Opening Admin Control Panel...
+start http://localhost:8080/admin.html

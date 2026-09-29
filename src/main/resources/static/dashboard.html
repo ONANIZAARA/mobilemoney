@@ -49,9 +49,7 @@
             color: #7f8c8d;
             transition: all 0.3s;
         }
-        .tab:hover {
-            background: #f8f9fa;
-        }
+        .tab:hover { background: #f8f9fa; }
         .tab.active { 
             color: #667eea; 
             border-bottom: 3px solid #667eea;
@@ -65,9 +63,7 @@
             display: none;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        .section.active { 
-            display: block; 
-        }
+        .section.active { display: block; }
         h2 { 
             margin-top: 0; 
             color: #667eea; 
@@ -84,10 +80,7 @@
             font-size: 16px;
             transition: border-color 0.3s;
         }
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+        input:focus { outline: none; border-color: #667eea; }
         button { 
             width: 100%; 
             padding: 14px; 
@@ -99,25 +92,12 @@
             font-size: 16px;
             transition: all 0.3s;
         }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        .btn-secondary { 
-            background: #3498db;
-            color: white;
-        }
-        .btn-danger { 
-            background: #e74c3c; 
-            color: white;
-        }
-        .btn-danger:hover {
-            background: #c0392b;
-        }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .btn-secondary { background: #3498db; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        
         .receipt { 
             background: #f8f9fa; 
             border: 3px dashed #27ae60; 
@@ -142,12 +122,9 @@
             padding: 8px 0;
             border-bottom: 1px solid #e0e0e0;
         }
-        .receipt p:last-child {
-            border-bottom: none;
-        }
-        .receipt strong { 
-            color: #2c3e50; 
-        }
+        .receipt p:last-child { border-bottom: none; }
+        .receipt strong { color: #2c3e50; }
+        
         .error { 
             color: #e74c3c; 
             font-weight: bold; 
@@ -182,10 +159,7 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        .wallet-info p {
-            margin: 8px 0;
-            word-break: break-all;
-        }
+        .wallet-info p { margin: 8px 0; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -258,7 +232,10 @@
 </div>
 
 <script>
-       const API_URL = "/api";
+    // Note: If testing via Live Server (127.0.0.1:5500), use "http://localhost:8080/api"
+    // If testing directly via Spring Boot (localhost:8080/dashboard.html), use "/api"
+    const API_URL = "http://localhost:8080/api"; 
+    
     let currentWalletId = "";
     let currentUserPhone = "";
     let currentUserName = "";
@@ -376,9 +353,7 @@
             const response = await fetch(`${API_URL}/balance?walletId=${currentWalletId}`);
             const data = await response.json();
             document.getElementById("displayBalance").textContent = parseFloat(data.currentBalance).toFixed(2);
-        } catch (err) { 
-            console.error("Failed to fetch balance"); 
-        }
+        } catch (err) { console.error("Failed to fetch balance"); }
     }
 
     async function processTransaction(type) {
@@ -422,19 +397,43 @@
     function deposit() { processTransaction("DEPOSIT"); }
     function withdraw() { processTransaction("WITHDRAWAL"); }
 
+    // FIXED: Robust function to convert large numbers to words
     function convertToWords(number) {
         if (number === 0) return "Zero";
+        
         const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
         const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+        
         let num = Math.floor(number);
         let words = "";
-        if (num >= 1000000) { words += ones[Math.floor(num / 1000000)] + " Million "; num %= 1000000; }
-        if (num >= 1000) { words += ones[Math.floor(num / 1000)] + " Thousand "; num %= 1000; }
-        if (num >= 100) { words += ones[Math.floor(num / 100)] + " Hundred "; num %= 100; }
-        if (num > 0) {
-            if (num < 20) words += ones[num];
-            else { words += tens[Math.floor(num / 10)]; if (num % 10 > 0) words += " " + ones[num % 10]; }
+
+        function convertChunk(n) {
+            let chunkWords = "";
+            if (n >= 100) {
+                chunkWords += ones[Math.floor(n / 100)] + " Hundred ";
+                n %= 100;
+            }
+            if (n >= 20) {
+                chunkWords += tens[Math.floor(n / 10)];
+                if (n % 10 > 0) chunkWords += " " + ones[n % 10];
+            } else if (n > 0) {
+                chunkWords += ones[n];
+            }
+            return chunkWords.trim();
         }
+
+        if (num >= 1000000) {
+            words += convertChunk(Math.floor(num / 1000000)) + " Million ";
+            num %= 1000000;
+        }
+        if (num >= 1000) {
+            words += convertChunk(Math.floor(num / 1000)) + " Thousand ";
+            num %= 1000;
+        }
+        if (num > 0) {
+            words += convertChunk(num);
+        }
+
         return words.trim();
     }
 </script>

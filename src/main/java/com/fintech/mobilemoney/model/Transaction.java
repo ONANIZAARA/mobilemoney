@@ -1,27 +1,28 @@
 package com.fintech.mobilemoney.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Table("transactions")
+@Table("transactions") // Forces Java to look at the exact table name
 public class Transaction {
     
-    @Id
+    @Id // Tells Spring Data this is the primary key
     private UUID id;
+    
     private UUID walletId;
     private String idempotencyKey;
-    private String type; // e.g., DEPOSIT, WITHDRAWAL, TRANSFER
+    private String type;
     private BigDecimal amount;
     private BigDecimal fee;
-    private String status; // e.g., PENDING, SUCCESS, FAILED
+    private String status;
     private String description;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
-
-    // Spring Data JDBC requires a default empty constructor
-    public Transaction() {}
 
     // Getters and Setters
     public UUID getId() { return id; }

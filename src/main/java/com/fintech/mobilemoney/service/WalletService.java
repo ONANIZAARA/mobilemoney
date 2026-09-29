@@ -2,79 +2,100 @@ package com.fintech.mobilemoney.service;
 
 import com.fintech.mobilemoney.model.Transaction;
 import com.fintech.mobilemoney.model.Wallet;
-import com.fintech.mobilemoney.repository.TransactionRepository;
 import com.fintech.mobilemoney.repository.WalletRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
 public class WalletService {
 
     private final WalletRepository walletRepository;
-    private final TransactionRepository transactionRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public WalletService(WalletRepository walletRepository, TransactionRepository transactionRepository) {
+    public WalletService(WalletRepository walletRepository, JdbcTemplate jdbcTemplate) {
         this.walletRepository = walletRepository;
-        this.transactionRepository = transactionRepository;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public BigDecimal getBalance(UUID walletId) {
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+        return wallet.getBalance();
     }
 
     @Transactional
     public Transaction deposit(UUID walletId, BigDecimal amount, String idempotencyKey) {
-        Wallet wallet = walletRepository.findByIdForUpdate(walletId)
+        Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
 
-        BigDecimal newBalance = wallet.getBalance().add(amount);
-        walletRepository.updateBalance(walletId, newBalance);
+        if ("FROZEN".equals(wallet.getStatus())) {
+            throw new RuntimeException("This wallet is FROZEN. Contact support.");
+        }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Amount must be greater than zero");
+        }
 
-        Transaction transaction = new Transaction();
-        transaction.setId(UUID.randomUUID());
-        transaction.setWalletId(walletId);
-        transaction.setIdempotencyKey(idempotencyKey);
-        transaction.setType("DEPOSIT");
-        transaction.setAmount(amount);
-        transaction.setFee(BigDecimal.ZERO);
-        transaction.setStatus("SUCCESS");
-        transaction.setDescription("Cash Deposit");
+        UUID txId = UUID.randomUUID();
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+
+        // The ::uuid cast forces PostgreSQL to accept the string as a UUID
+        String sql = "INSERT INTO transactions (id, wallet_id, idempotency_key, type, amount, fee, status, description, created_at) " +
+                     "VALUES (?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?)";
         
-        return transactionRepository.save(transaction); // Returns the receipt!
+        jdbcTemplate.update(sql, txId.toString(), walletId.toString(), idempotencyKey, "DEPOSIT", amount, BigDecimal.ZERO, "SUCCESS", "DEPOSIT via Web Dashboard", now);
+
+        wallet.setBalance(wallet.getBalance().add(amount));
+        walletRepository.save(wallet);
+
+        Transaction t = new Transaction();
+        t.setId(txId);
+        t.setAmount(amount);
+        t.setFee(BigDecimal.ZERO);
+        t.setStatus("SUCCESS");
+        return t;
     }
 
     @Transactional
     public Transaction withdraw(UUID walletId, BigDecimal amount, String idempotencyKey) {
-        Wallet wallet = walletRepository.findByIdForUpdate(walletId)
+        Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(() -> new RuntimeException("Wallet not found"));
 
-        BigDecimal fee = amount.multiply(new BigDecimal("0.015")).setScale(4, RoundingMode.HALF_UP);
+        if ("FROZEN".equals(wallet.getStatus())) {
+            throw new RuntimeException("This wallet is FROZEN. Contact support.");
+        }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Amount must be greater than zero");
+        }
+
+        BigDecimal fee = amount.multiply(new BigDecimal("0.015"));
         BigDecimal totalDeduction = amount.add(fee);
 
         if (wallet.getBalance().compareTo(totalDeduction) < 0) {
-            throw new RuntimeException("Insufficient funds. You need " + totalDeduction + " but only have " + wallet.getBalance());
+            throw new RuntimeException("Insufficient funds.");
         }
 
-        BigDecimal newBalance = wallet.getBalance().subtract(totalDeduction);
-        walletRepository.updateBalance(walletId, newBalance);
+        UUID txId = UUID.randomUUID();
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
 
-        Transaction transaction = new Transaction();
-        transaction.setId(UUID.randomUUID());
-        transaction.setWalletId(walletId);
-        transaction.setIdempotencyKey(idempotencyKey);
-        transaction.setType("WITHDRAWAL");
-        transaction.setAmount(amount);
-        transaction.setFee(fee);
-        transaction.setStatus("SUCCESS");
-        transaction.setDescription("Cash Withdrawal");
+        String sql = "INSERT INTO transactions (id, wallet_id, idempotency_key, type, amount, fee, status, description, created_at) " +
+                     "VALUES (?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?)";
         
-        return transactionRepository.save(transaction); // Returns the receipt!
-    }
-    
-    // Helper to get current balance for the receipt
-    public BigDecimal getBalance(UUID walletId) {
-        return walletRepository.findById(walletId)
-                .map(Wallet::getBalance)
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+        jdbcTemplate.update(sql, txId.toString(), walletId.toString(), idempotencyKey, "WITHDRAWAL", amount, fee, "SUCCESS", "WITHDRAWAL via Web Dashboard", now);
+
+        wallet.setBalance(wallet.getBalance().subtract(totalDeduction));
+        walletRepository.save(wallet);
+
+        Transaction t = new Transaction();
+        t.setId(txId);
+        t.setAmount(amount);
+        t.setFee(fee);
+        t.setStatus("SUCCESS");
+        return t;
     }
 }

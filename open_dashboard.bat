@@ -1,0 +1,3 @@
+@echo off
+echo Opening Mobile Money Dashboard...
+start http://localhost:8080/dashboard.html
